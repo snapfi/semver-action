@@ -1,0 +1,30 @@
+name: Unit Tests
+
+on: push
+
+env:
+  GO_VERSION_FILE: "go.mod"
+  CHECK_LATEST: true
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+      -
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: ${{ env.GO_VERSION_FILE }}
+          check-latest: ${{ env.CHECK_LATEST }}
+      -
+        name: Pull dependencies
+        run: go mod vendor
+      -
+        name: Linter
+        run: make lint
+      -
+        name: Unit tests
+        run: make test
