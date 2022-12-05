@@ -1,6 +1,7 @@
 package generate
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -72,12 +73,6 @@ func Tag(params Params, gc gitClient) (Result, error) {
 		return Result{}, fmt.Errorf("current folder is not a git repository")
 	}
 
-	tagSource := "git"
-
-	if params.BaseVersion != nil {
-		tagSource = "parameter"
-	}
-
 	dest, err := gc.CurrentBranch()
 	if err != nil {
 		return Result{}, fmt.Errorf("failed to extract dest branch from commit: %s", err)
@@ -92,7 +87,14 @@ func Tag(params Params, gc gitClient) (Result, error) {
 
 	log.Debugf("source branch: %q\n", source)
 
-	method, version := determineBumpStrategy(params.Bump, source, dest, params.BranchName)
+	method, version, err := determineBumpStrategy(params.Bump, source, dest, params.BranchName)
+	if err != nil {
+		return Result{}, fmt.Errorf("failed to determine bump strategy: %s", err)
+	}
+
+	if method == "" && version == "" {
+		return Result{}, nil
+	}
 
 	log.Debugf("method: %q, version: %q", method, version)
 
@@ -111,7 +113,7 @@ func Tag(params Params, gc gitClient) (Result, error) {
 
 	previousTag := params.Prefix + tag.String()
 
-	if tagSource != "git" {
+	if params.BaseVersion != nil {
 		tag = params.BaseVersion
 	}
 
@@ -131,30 +133,11 @@ func Tag(params Params, gc gitClient) (Result, error) {
 		}
 	}
 
-	if (version == "patch" && method == "build") || method == "patch" || method == "hotfix" {
+	if (version == "patch" && method == "build") || method == "patch" {
 		log.Debug("incrementing patch")
 
 		if err := tag.IncrementPatch(); err != nil {
 			return Result{}, fmt.Errorf("failed to increment patch version: %s", err)
-		}
-	}
-
-	// If branch is prefixed with doc or misc and the latest tag is equal to the
-	// ancestor branch tag excluding prerelease part, then it will use ancestor one instead.
-	if (branchDocPrefixRegex.MatchString(source) || branchMiscPrefixRegex.MatchString(source)) &&
-		dest == params.BranchName {
-		ancestorDevelopTag := gc.AncestorTag(
-			fmt.Sprintf("%s[0-9]*-%s*", params.Prefix, params.PrereleaseID),
-			"",
-			dest)
-
-		parsed, err := semver.ParseTolerant(ancestorDevelopTag)
-		if err != nil {
-			return Result{}, fmt.Errorf("failed to parse tag %q or not valid semantic version: %s", latestTag, err)
-		}
-
-		if tag.String() == parsed.FinalizeVersion() {
-			tag = &parsed
 		}
 	}
 
@@ -208,6 +191,13 @@ func Tag(params Params, gc gitClient) (Result, error) {
 		finalTag = params.Prefix + tag.String()
 	}
 
+	if !params.ForcePrerelease {
+		isPrerelease = false
+		includePattern = fmt.Sprintf("%s[0-9]*", params.Prefix)
+		excludePattern = fmt.Sprintf("%s[0-9]*-%s*", params.Prefix, params.PrereleaseID)
+		finalTag = params.Prefix + tag.FinalizeVersion()
+	}
+
 	ancestorTag = gc.AncestorTag(includePattern, excludePattern, dest)
 
 	return Result{
@@ -219,35 +209,31 @@ func Tag(params Params, gc gitClient) (Result, error) {
 }
 
 // determineBumpStrategy determines the strategy for semver to bump product version.
-func determineBumpStrategy(bump, sourceBranch, destBranch, branchName string) (string, string) {
+func determineBumpStrategy(bump, sourceBranch, destBranch, branchName string) (string, string, error) {
 	if bump != "auto" {
-		return bump, ""
+		return bump, "", nil
 	}
 
 	// bugfix into main branch
 	if branchBugfixPrefixRegex.MatchString(sourceBranch) && destBranch == branchName {
-		return "build", "patch"
-	}
-
-	// doc into main branch
-	if branchDocPrefixRegex.MatchString(sourceBranch) && destBranch == branchName {
-		return "build", ""
+		return "build", "patch", nil
 	}
 
 	// feature into main branch
 	if branchFeaturePrefixRegex.MatchString(sourceBranch) && destBranch == branchName {
-		return "build", "minor"
+		return "build", "minor", nil
 	}
 
 	// major into main branch
 	if branchMajorPrefixRegex.MatchString(sourceBranch) && destBranch == branchName {
-		return "build", "major"
+		return "build", "major", nil
 	}
 
-	// misc into main branch
-	if branchMiscPrefixRegex.MatchString(sourceBranch) && destBranch == branchName {
-		return "build", ""
+	// docs or misc into main branch
+	if (branchDocPrefixRegex.MatchString(sourceBranch) || branchMiscPrefixRegex.MatchString(sourceBranch)) &&
+		destBranch == branchName {
+		return "", "", nil
 	}
 
-	return "build", ""
+	return "", "", errors.New("invalid bump strategy")
 }
