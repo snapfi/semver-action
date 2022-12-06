@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	//nolint
+	// nolint
 	commitShaRegex = regexp.MustCompile(`\b[0-9a-f]{5,40}\b`)
 	// nolint
 	validBumpStrategies = []string{"auto", "major", "minor", "patch"}
@@ -20,14 +20,15 @@ var (
 
 // Params contains semver generate command parameters.
 type Params struct {
-	CommitSha    string
-	RepoDir      string
-	Bump         string
-	BaseVersion  *semver.Version
-	Prefix       string
-	PrereleaseID string
-	BranchName   string
-	Debug        bool
+	CommitSha       string
+	RepoDir         string
+	Bump            string
+	BaseVersion     *semver.Version
+	Prefix          string
+	PrereleaseID    string
+	ForcePrerelease bool
+	BranchName      string
+	Debug           bool
 }
 
 // LoadParams loads semver generate config params.
@@ -101,15 +102,27 @@ func LoadParams() (Params, error) {
 		prereleaseID = prereleaseIDStr
 	}
 
+	var forcePrerelease bool
+
+	if forcePrereleaseStr := actions.GetInput("force_prerelease"); forcePrereleaseStr != "" {
+		parsed, err := strconv.ParseBool(forcePrereleaseStr)
+		if err != nil {
+			return Params{}, fmt.Errorf("invalid force_prerelease argument: %s", forcePrereleaseStr)
+		}
+
+		forcePrerelease = parsed
+	}
+
 	return Params{
-		CommitSha:    commitSha,
-		RepoDir:      repoDir,
-		Bump:         bump,
-		BaseVersion:  baseVersion,
-		Prefix:       prefix,
-		PrereleaseID: prereleaseID,
-		BranchName:   branchName,
-		Debug:        debug,
+		CommitSha:       commitSha,
+		RepoDir:         repoDir,
+		Bump:            bump,
+		BaseVersion:     baseVersion,
+		Prefix:          prefix,
+		PrereleaseID:    prereleaseID,
+		ForcePrerelease: forcePrerelease,
+		BranchName:      branchName,
+		Debug:           debug,
 	}, nil
 }
 
@@ -131,12 +144,14 @@ func (p Params) String() string {
 
 	return fmt.Sprintf(
 		"commit sha: %q, bump: %q, base version: %q, prefix: %q,"+
-			" prerelease id: %q, branch name: %q, repo dir: %q, debug: %t\n",
+			" prerelease id: %q, force prerelease: %t, branch name: %q,"+
+			" repo dir: %q, debug: %t\n",
 		p.CommitSha,
 		p.Bump,
 		baseVersion,
 		p.Prefix,
 		p.PrereleaseID,
+		p.ForcePrerelease,
 		p.BranchName,
 		p.RepoDir,
 		p.Debug,

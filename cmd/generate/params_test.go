@@ -12,9 +12,16 @@ import (
 )
 
 func TestLoadParams_Prefix(t *testing.T) {
-	os.Setenv("INPUT_PREFIX", "v")
+	os.Setenv("INPUT_PREFIX", "ver")
 	defer os.Unsetenv("INPUT_PREFIX")
 
+	params, err := generate.LoadParams()
+	require.NoError(t, err)
+
+	assert.Equal(t, "ver", params.Prefix)
+}
+
+func TestLoadParams_Prefix_Default(t *testing.T) {
 	params, err := generate.LoadParams()
 	require.NoError(t, err)
 
@@ -31,10 +38,41 @@ func TestLoadParams_PrereleaseID(t *testing.T) {
 	assert.Equal(t, "alpha", params.PrereleaseID)
 }
 
+func TestLoadParams_PrereleaseID_Default(t *testing.T) {
+	params, err := generate.LoadParams()
+	require.NoError(t, err)
+
+	assert.Equal(t, "pre", params.PrereleaseID)
+}
+
+func TestLoadParams_ForcePrerelease(t *testing.T) {
+	os.Setenv("INPUT_FORCE_PRERELEASE", "true")
+	defer os.Unsetenv("INPUT_FORCE_PRERELEASE")
+
+	params, err := generate.LoadParams()
+	require.NoError(t, err)
+
+	assert.True(t, params.ForcePrerelease)
+}
+
+func TestLoadParams_ForcePrerelease_Default(t *testing.T) {
+	params, err := generate.LoadParams()
+	require.NoError(t, err)
+
+	assert.False(t, params.ForcePrerelease)
+}
+
 func TestLoadParams_BranchName(t *testing.T) {
-	os.Setenv("INPUT_BRANCH_NAME", "main")
+	os.Setenv("INPUT_BRANCH_NAME", "master")
 	defer os.Unsetenv("INPUT_BRANCH_NAME")
 
+	params, err := generate.LoadParams()
+	require.NoError(t, err)
+
+	assert.Equal(t, "master", params.BranchName)
+}
+
+func TestLoadParams_BranchName_Default(t *testing.T) {
 	params, err := generate.LoadParams()
 	require.NoError(t, err)
 
@@ -67,6 +105,13 @@ func TestLoadParams_RepoDir(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "/var/tmp/wakatime-cli", params.RepoDir)
+}
+
+func TestLoadParams_RepoDir_Default(t *testing.T) {
+	params, err := generate.LoadParams()
+	require.NoError(t, err)
+
+	assert.Equal(t, ".", params.RepoDir)
 }
 
 func TestLoadParams_Bump(t *testing.T) {

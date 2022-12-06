@@ -18,6 +18,8 @@ These are the prefixes we expect when `auto` bump:
 
 ### Scenarios
 
+In case of `force_prelease` is `true`, it will always create a pre-release version. Otherwise, it will create a final version.
+
 #### Auto Bump
 
 - Not a valid source branch prefix - Increments prerelease version.
@@ -89,21 +91,22 @@ Uses `auto` bump strategy to calculate the next semantic version.
 
 ## Inputs
 
-| parameter           | required | description                                                                      | default     |
-| ---                 | ---      | ---                                                                              | ---         |
-| bump                |          | Bump strategy for semantic versioning. Can be `auto`, `major`, `minor`, `patch`. | auto        |
-| base_version        |          | Version to use as base for the generation, skips version bumps.                  |             |
-| prefix              |          | Prefix used to prepend the final version.                                        | v           |
-| prerelease_id       |          | Text representing the prerelease identifier.                                     | pre         |
-| branch_name         |          | The branch name.                                                                 | main        |
-| repo_dir            |          | The repository path.                                                             | current dir |
-| debug               |          | Enables debug mode.                                                              | false       |
+| parameter | required | description | default |
+| --- | --- | --- | --- |
+| bump | false | Bump strategy for semantic versioning. Can be `auto`, `major`, `minor`, `patch`. | auto |
+| base_version | false | Version to use as base for the generation, skips version bumps. | |
+| prefix | false | Prefix used to prepend the final version.| v |
+| prerelease_id | false | Text representing the prerelease identifier. | pre |
+| force_prerelease | false | Force the generation of a prerelease version. Usually used in trunk-based development where the main branch is always a prerelease version. | false |
+| branch_name | false | The branch name. | main  |
+| repo_dir | false | The repository path. | current dir |
+| debug | false | Enables debug mode. | false |
 
 ## Outpus
 
 | parameter     | description                                      |
 | ---           | ---                                              |
-| semver_tag    | The calculdated semantic version.                |
-| is_prerelease | True if calculated tag is prerelease.           |
+| semver_tag    | The calculated semantic version.                 |
+| is_prerelease | True if calculated tag is prerelease.            |
 | previous_tag  | The tag used to calculate next semantic version. |
 | ancestor_tag  | The ancestor tag based on specific pattern.      |

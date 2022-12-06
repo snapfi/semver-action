@@ -43,6 +43,11 @@ endif
 lint: install-linter
 	golangci-lint run ./...
 
+.PHONY: vulncheck
+vulncheck:
+	go install golang.org/x/vuln/cmd/govulncheck@latest
+	govulncheck ./...
+
 .PHONY: test
 test:
 	$(GOTEST) -race -covermode=atomic -coverprofile=coverage.out ./...

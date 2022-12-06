@@ -5,6 +5,7 @@ go 1.19
 require (
 	github.com/apex/log v1.9.0
 	github.com/blang/semver/v4 v4.0.0
+	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 	github.com/stretchr/testify v1.8.1
 )
 

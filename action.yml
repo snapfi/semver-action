@@ -21,6 +21,10 @@ inputs:
     description: 'Text representing the prerelease identifier'
     default: 'pre'
     required: false
+  force_prerelease:
+    description: 'Force the generation of a prerelease version. Usually used in trunk-based development where the main branch is always a prerelease version'
+    default: 'false'
+    required: false
   branch_name:
     description: 'The branch name'
     default: 'main'
@@ -52,6 +56,7 @@ runs:
     - ${{ inputs.base_version }}
     - ${{ inputs.prefix }}
     - ${{ inputs.prerelease_id }}
+    - ${{ inputs.force_prerelease }}
     - ${{ inputs.branch_name }}
     - ${{ inputs.repo_dir }}
     - ${{ inputs.debug }}

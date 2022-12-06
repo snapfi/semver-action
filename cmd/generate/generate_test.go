@@ -24,11 +24,12 @@ func TestTag(t *testing.T) {
 			CurrentBranch: "main",
 			SourceBranch:  "major/some",
 			Params: generate.Params{
-				CommitSha:    "81918ffc",
-				Bump:         "auto",
-				Prefix:       "v",
-				PrereleaseID: "alpha",
-				BranchName:   "main",
+				CommitSha:       "81918ffc",
+				Bump:            "auto",
+				Prefix:          "v",
+				PrereleaseID:    "alpha",
+				ForcePrerelease: true,
+				BranchName:      "main",
 			},
 			Result: generate.Result{
 				PreviousTag:  "v0.0.0",
@@ -49,42 +50,19 @@ func TestTag(t *testing.T) {
 				PrereleaseID: "alpha",
 				BranchName:   "main",
 			},
-			Result: generate.Result{
-				PreviousTag:  "v0.2.1-alpha.1",
-				AncestorTag:  "v0.2.0-alpha.1",
-				SemverTag:    "v0.2.1-alpha.2",
-				IsPrerelease: true,
-			},
-		},
-		"doc branch into main when latest tag is equal to ancestor main tag excluding prerelease part": {
-			CurrentBranch: "main",
-			LatestTag:     "v0.2.1",
-			AncestorTag:   "v0.2.1-alpha.2",
-			SourceBranch:  "doc/some",
-			Params: generate.Params{
-				CommitSha:    "81918ffc",
-				Bump:         "auto",
-				Prefix:       "v",
-				PrereleaseID: "alpha",
-				BranchName:   "main",
-			},
-			Result: generate.Result{
-				PreviousTag:  "v0.2.1",
-				AncestorTag:  "v0.2.1-alpha.2",
-				SemverTag:    "v0.2.1-alpha.3",
-				IsPrerelease: true,
-			},
+			Result: generate.Result{},
 		},
 		"feature branch into main": {
 			CurrentBranch: "main",
 			LatestTag:     "v0.2.1",
 			SourceBranch:  "feature/some",
 			Params: generate.Params{
-				CommitSha:    "81918ffc",
-				Bump:         "auto",
-				Prefix:       "v",
-				PrereleaseID: "alpha",
-				BranchName:   "main",
+				CommitSha:       "81918ffc",
+				Bump:            "auto",
+				Prefix:          "v",
+				PrereleaseID:    "alpha",
+				ForcePrerelease: true,
+				BranchName:      "main",
 			},
 			Result: generate.Result{
 				PreviousTag:  "v0.2.1",
@@ -95,16 +73,19 @@ func TestTag(t *testing.T) {
 		"bugfix branch into main": {
 			CurrentBranch: "main",
 			LatestTag:     "v0.2.1",
+			AncestorTag:   "v0.2.1-alpha.2",
 			SourceBranch:  "bugfix/some",
 			Params: generate.Params{
-				CommitSha:    "81918ffc",
-				Bump:         "auto",
-				Prefix:       "v",
-				PrereleaseID: "alpha",
-				BranchName:   "main",
+				CommitSha:       "81918ffc",
+				Bump:            "auto",
+				Prefix:          "v",
+				PrereleaseID:    "alpha",
+				ForcePrerelease: true,
+				BranchName:      "main",
 			},
 			Result: generate.Result{
 				PreviousTag:  "v0.2.1",
+				AncestorTag:  "v0.2.1-alpha.2",
 				SemverTag:    "v0.2.2-alpha.1",
 				IsPrerelease: true,
 			},
@@ -121,11 +102,44 @@ func TestTag(t *testing.T) {
 				PrereleaseID: "alpha",
 				BranchName:   "main",
 			},
+			Result: generate.Result{},
+		},
+		"valid branch into main with with force_prerelease false and with pre-release latest tag": {
+			CurrentBranch: "main",
+			LatestTag:     "v0.2.1-alpha.1",
+			AncestorTag:   "v0.2.0-alpha.1",
+			SourceBranch:  "feature/some",
+			Params: generate.Params{
+				CommitSha:    "81918ffc",
+				Bump:         "auto",
+				Prefix:       "v",
+				PrereleaseID: "alpha",
+				BranchName:   "main",
+			},
 			Result: generate.Result{
 				PreviousTag:  "v0.2.1-alpha.1",
 				AncestorTag:  "v0.2.0-alpha.1",
-				SemverTag:    "v0.2.1-alpha.2",
-				IsPrerelease: true,
+				SemverTag:    "v0.3.0",
+				IsPrerelease: false,
+			},
+		},
+		"valid branch into main with with force_prerelease false": {
+			CurrentBranch: "main",
+			LatestTag:     "v0.2.1",
+			AncestorTag:   "v0.2.0",
+			SourceBranch:  "feature/some",
+			Params: generate.Params{
+				CommitSha:    "81918ffc",
+				Bump:         "auto",
+				Prefix:       "v",
+				PrereleaseID: "alpha",
+				BranchName:   "main",
+			},
+			Result: generate.Result{
+				PreviousTag:  "v0.2.1",
+				AncestorTag:  "v0.2.0",
+				SemverTag:    "v0.3.0",
+				IsPrerelease: false,
 			},
 		},
 		"base version set": {
@@ -133,33 +147,17 @@ func TestTag(t *testing.T) {
 			LatestTag:     "v2.6.19",
 			SourceBranch:  "feature/semver-initial",
 			Params: generate.Params{
-				CommitSha:    "81918ffc",
-				Bump:         "auto",
-				BaseVersion:  newSemVerPtr(t, "4.2.0"),
-				Prefix:       "v",
-				PrereleaseID: "alpha",
-				BranchName:   "main",
+				CommitSha:       "81918ffc",
+				Bump:            "auto",
+				BaseVersion:     newSemVerPtr(t, "4.2.0"),
+				Prefix:          "v",
+				PrereleaseID:    "alpha",
+				ForcePrerelease: true,
+				BranchName:      "main",
 			},
 			Result: generate.Result{
 				PreviousTag:  "v2.6.19",
 				SemverTag:    "v4.3.0-alpha.1",
-				IsPrerelease: true,
-			},
-		},
-		"invalid branch name": {
-			CurrentBranch: "main",
-			LatestTag:     "v2.6.19-alpha.1",
-			SourceBranch:  "semver-initial",
-			Params: generate.Params{
-				CommitSha:    "81918ffc",
-				Bump:         "auto",
-				Prefix:       "v",
-				PrereleaseID: "alpha",
-				BranchName:   "main",
-			},
-			Result: generate.Result{
-				PreviousTag:  "v2.6.19-alpha.1",
-				SemverTag:    "v2.6.19-alpha.2",
 				IsPrerelease: true,
 			},
 		},
@@ -168,11 +166,12 @@ func TestTag(t *testing.T) {
 			LatestTag:     "v2.6.19-alpha.1",
 			SourceBranch:  "semver-initial",
 			Params: generate.Params{
-				CommitSha:    "81918ffc",
-				Bump:         "major",
-				Prefix:       "v",
-				PrereleaseID: "alpha",
-				BranchName:   "main",
+				CommitSha:       "81918ffc",
+				Bump:            "major",
+				Prefix:          "v",
+				PrereleaseID:    "alpha",
+				ForcePrerelease: true,
+				BranchName:      "main",
 			},
 			Result: generate.Result{
 				PreviousTag:  "v2.6.19-alpha.1",
@@ -185,11 +184,12 @@ func TestTag(t *testing.T) {
 			LatestTag:     "v2.6.19-alpha.1",
 			SourceBranch:  "semver-initial",
 			Params: generate.Params{
-				CommitSha:    "81918ffc",
-				Bump:         "minor",
-				Prefix:       "v",
-				PrereleaseID: "alpha",
-				BranchName:   "main",
+				CommitSha:       "81918ffc",
+				Bump:            "minor",
+				Prefix:          "v",
+				PrereleaseID:    "alpha",
+				ForcePrerelease: true,
+				BranchName:      "main",
 			},
 			Result: generate.Result{
 				PreviousTag:  "v2.6.19-alpha.1",
@@ -202,11 +202,12 @@ func TestTag(t *testing.T) {
 			LatestTag:     "v2.6.19-alpha.1",
 			SourceBranch:  "semver-initial",
 			Params: generate.Params{
-				CommitSha:    "81918ffc",
-				Bump:         "patch",
-				Prefix:       "v",
-				PrereleaseID: "alpha",
-				BranchName:   "main",
+				CommitSha:       "81918ffc",
+				Bump:            "patch",
+				Prefix:          "v",
+				PrereleaseID:    "alpha",
+				ForcePrerelease: true,
+				BranchName:      "main",
 			},
 			Result: generate.Result{
 				PreviousTag:  "v2.6.19-alpha.1",
@@ -233,6 +234,31 @@ func TestTag(t *testing.T) {
 			assert.Equal(t, test.Result, result)
 		})
 	}
+}
+
+func TestTag_InvalidBranchName(t *testing.T) {
+	params := generate.Params{
+		CommitSha:    "81918ffc",
+		Bump:         "auto",
+		Prefix:       "v",
+		PrereleaseID: "alpha",
+		BranchName:   "main",
+	}
+
+	gc := initGitClientMock(
+		t,
+		"v2.6.19-alpha.1",
+		"",
+		"main",
+		"semver-initial",
+		"81918ffc",
+	)
+
+	result, err := generate.Tag(params, gc)
+
+	assert.EqualError(t, err, "failed to determine bump strategy: invalid bump strategy")
+
+	assert.Empty(t, result)
 }
 
 func TestTag_IsNotRepo(t *testing.T) {

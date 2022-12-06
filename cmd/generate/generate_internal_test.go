@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDetermineBumpStrategy(t *testing.T) {
@@ -25,7 +26,7 @@ func TestDetermineBumpStrategy(t *testing.T) {
 			SourceBranch:    "doc/some",
 			DestBranch:      "main",
 			Bump:            "auto",
-			ExpectedMethod:  "build",
+			ExpectedMethod:  "",
 			ExpectedVersion: "",
 		},
 		"source branch feature, dest branch main and auto bump": {
@@ -46,13 +47,8 @@ func TestDetermineBumpStrategy(t *testing.T) {
 			SourceBranch:    "misc/some",
 			DestBranch:      "main",
 			Bump:            "auto",
-			ExpectedMethod:  "build",
+			ExpectedMethod:  "",
 			ExpectedVersion: "",
-		},
-		"not a valid source branch prefix and auto bump": {
-			SourceBranch:   "some-branch",
-			Bump:           "auto",
-			ExpectedMethod: "build",
 		},
 		"patch bump": {
 			Bump:           "patch",
@@ -70,10 +66,17 @@ func TestDetermineBumpStrategy(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			method, version := determineBumpStrategy(test.Bump, test.SourceBranch, test.DestBranch, "main")
+			method, version, err := determineBumpStrategy(test.Bump, test.SourceBranch, test.DestBranch, "main")
+			require.NoError(t, err)
 
 			assert.Equal(t, test.ExpectedMethod, method)
 			assert.Equal(t, test.ExpectedVersion, version)
 		})
 	}
+}
+
+func TestDetermineBumpStrategy_InvalidSource(t *testing.T) {
+	_, _, err := determineBumpStrategy("auto", "some-branch", "main", "main")
+
+	assert.EqualError(t, err, "invalid bump strategy")
 }
